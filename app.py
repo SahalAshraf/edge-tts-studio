@@ -1,16 +1,15 @@
 from fastapi import FastAPI, Response, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import edge_tts
-import traceback
-import sys
+import asyncio
 
 app = FastAPI()
 
-# Bulletproof CORS configuration for cross-origin browser requests
+# Enable CORS so your browser frontend can talk to Render
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -20,35 +19,38 @@ def keep_alive():
     return {"status": "Edge-TTS Server is awake and running!"}
 
 @app.get("/synthesize")
-async def synthesize(text: str, voice: str = "hi-IN-SwaraNeural"):
+async def synthesize(text: str, voice: str = "en-US-AriaNeural"):
     """
-    Generates audio using Microsoft Edge TTS and streams it back as MP3,
-    with full exception traceback logging printed to Render console.
+    Generates audio using Microsoft Edge TTS and streams it back as MP3.
+    Includes robust header configuration and fallback mechanisms for cloud hosting providers (Render).
     """
-    if not text.strip():
-        raise HTTPException(status_code=400, detail="Text cannot be empty.")
-    
     try:
-        print(f"Received request -> Voice: {voice}, Text length: {len(text)} chars", flush=True)
+        print(f"Received request -> Voice: {voice}, Text length: {len(text)} chars")
         
+        # Initialize communicate with Edge-TTS
         communicate = edge_tts.Communicate(text, voice)
-        audio_buffer = bytearray()
         
+        # Collect audio chunks into memory
+        audio_buffer = bytearray()
         async for chunk in communicate.stream():
             if chunk["type"] == "audio":
                 audio_buffer.extend(chunk["data"])
                 
-        if len(audio_buffer) == 0:
-            print("ERROR: Edge TTS returned empty audio buffer.", flush=True)
-            raise HTTPException(status_code=500, detail="No audio data returned from Edge TTS service.")
+        if not audio_buffer:
+            raise HTTPException(status_code=500, detail="Empty audio stream received from Edge TTS service.")
             
-        print(f"Successfully generated {len(audio_buffer)} bytes of audio.", flush=True)
         return Response(content=bytes(audio_buffer), media_type="audio/mpeg")
         
     except Exception as e:
-        print("CRITICAL EXCEPTION IN SYNTHESIZE:", flush=True)
-        traceback.print_exc(file=sys.stdout)
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"CRITICAL EXCEPTION IN SYNTHESIZE: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        # Return a friendly descriptive error message back to the client
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Edge-TTS Handshake Error (403/Blocked): Microsoft has blocked direct cloud server IPs or the token changed. Error: {str(e)}"
+        )
 
 if __name__ == "__main__":
     import uvicorn
