@@ -1,0 +1,15 @@
+<!-- In your frontend JavaScript fetch call -->
+<script>
+  async function generateSpeech(text, voice) {
+    const backendUrl = "https://your-render-app-name.onrender.com/synthesize";
+    const url = `${backendUrl}?text=${encodeURIComponent(text)}&voice=${voice}`;
+    
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const audioUrl = URL.createObjectURL(blob);
+    
+    const player = document.getElementById('audioPlayer');
+    player.src = audioUrl;
+    player.play();
+  }
+</script>
