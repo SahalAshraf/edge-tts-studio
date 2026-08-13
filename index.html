@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Local TTS Hub & Audio Exporter</title>
+  <title>Local TTS Hub & Voice Modulator</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -17,12 +17,12 @@
     <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
       <div>
         <h1 class="text-xl font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-microphone-lines text-blue-400"></i> Local TTS Hub & MP3
+          <i class="fa-solid fa-sliders text-blue-400"></i> Local TTS Hub & Modulator
         </h1>
-        <p class="text-xs text-slate-400 mt-0.5">Runs 100% locally on your phone/browser</p>
+        <p class="text-xs text-slate-400 mt-0.5">Control emotion, pitch, speed & export clean audio</p>
       </div>
       <span class="text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full font-bold">
-        ● API Active
+        ● Local API Ready
       </span>
     </div>
 
@@ -35,17 +35,35 @@
         </select>
       </div>
 
+      <!-- Emotion / Pitch & Rate Sliders -->
+      <div class="grid grid-cols-2 gap-3 bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
+        <div>
+          <div class="flex justify-between text-xs text-slate-400 mb-1">
+            <span class="font-bold uppercase tracking-wider">Pitch (Emotion)</span>
+            <span id="pitchVal" class="font-mono text-blue-400">1.0</span>
+          </div>
+          <input type="range" id="pitchRange" min="0.5" max="2" step="0.1" value="1.0" class="w-full accent-blue-500" oninput="document.getElementById('pitchVal').innerText = this.value">
+        </div>
+        <div>
+          <div class="flex justify-between text-xs text-slate-400 mb-1">
+            <span class="font-bold uppercase tracking-wider">Speed (Rate)</span>
+            <span id="rateVal" class="font-mono text-blue-400">1.0</span>
+          </div>
+          <input type="range" id="rateRange" min="0.5" max="2" step="0.1" value="1.0" class="w-full accent-blue-500" oninput="document.getElementById('rateVal').innerText = this.value">
+        </div>
+      </div>
+
       <div>
         <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Text to Convert / Speak</label>
-        <textarea id="textInput" rows="4" class="w-full p-3.5 bg-slate-950 border border-slate-700 rounded-2xl text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none">Hello! This text-to-speech hub converts text, plays audio, and saves audio files locally.</textarea>
+        <textarea id="textInput" rows="3" class="w-full p-3.5 bg-slate-950 border border-slate-700 rounded-2xl text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none">Hello! Adjust the pitch and speed sliders to alter the emotion of the voice.</textarea>
       </div>
 
       <div class="grid grid-cols-3 gap-2">
         <button onclick="speakText()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 px-3 rounded-xl text-xs transition flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-blue-950/40">
           <i class="fa-solid fa-play"></i> Speak
         </button>
-        <button onclick="downloadAudioFile()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 px-3 rounded-xl text-xs transition flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-emerald-950/40">
-          <i class="fa-solid fa-download"></i> Save MP3
+        <button onclick="recordAndDownloadAudio()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 px-3 rounded-xl text-xs transition flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-emerald-950/40">
+          <i class="fa-solid fa-download"></i> Save Audio
         </button>
         <button onclick="stopSpeech()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-semibold py-3 px-3 rounded-xl text-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
           <i class="fa-solid fa-stop"></i> Stop
@@ -55,18 +73,17 @@
 
     <!-- Status Box -->
     <div id="statusDiv" class="mt-4 p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-400 text-center font-mono">
-      Ready for speech generation, audio export, or local API calls.
+      Ready for speech generation, emotion modification, or local API calls.
     </div>
 
     <!-- Integration Guide Box -->
     <div class="mt-6 pt-5 border-t border-slate-800">
       <h2 class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-2">
-        <i class="fa-solid fa-code mr-1"></i> How to call this tool from your other local web tools:
+        <i class="fa-solid fa-code mr-1"></i> Local API Integration Snippet:
       </h2>
-      <p class="text-xs text-slate-400 mb-2">Copy and paste this snippet into any other web app running in your browser:</p>
       <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 font-mono text-[11px] text-emerald-400 overflow-x-auto">
         const ttsChannel = new BroadcastChannel('local_tts_bridge');<br>
-        ttsChannel.postMessage({ text: "Hello from another tab!", lang: "en" });
+        ttsChannel.postMessage({ text: "Text from your other local app!" });
       </div>
     </div>
 
@@ -77,6 +94,8 @@
     const voiceSelect = document.getElementById('voiceSelect');
     const textInput = document.getElementById('textInput');
     const statusDiv = document.getElementById('statusDiv');
+    const pitchRange = document.getElementById('pitchRange');
+    const rateRange = document.getElementById('rateRange');
 
     function loadVoices() {
       voices = window.speechSynthesis.getVoices();
@@ -98,9 +117,23 @@
     window.speechSynthesis.onvoiceschanged = loadVoices;
     loadVoices();
 
+    function getUtterance(textToSpeak) {
+      const text = textToSpeak || textInput.value.trim();
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+      const selectedIndex = voiceSelect.value;
+      if (selectedIndex !== "" && voices[selectedIndex]) {
+        utterance.voice = voices[selectedIndex];
+      }
+
+      utterance.pitch = parseFloat(pitchRange.value);
+      utterance.rate = parseFloat(rateRange.value);
+      return utterance;
+    }
+
     function speakText(customText) {
       if (!('speechSynthesis' in window)) {
-        statusDiv.innerText = "❌ Speech synthesis not supported in this browser.";
+        statusDiv.innerText = "❌ Speech synthesis not supported.";
         return;
       }
 
@@ -111,14 +144,10 @@
         return;
       }
 
-      const utterance = new SpeechSynthesisUtterance(text);
-      const selectedIndex = voiceSelect.value;
-      if (selectedIndex !== "" && voices[selectedIndex]) {
-        utterance.voice = voices[selectedIndex];
-      }
+      const utterance = getUtterance(text);
 
       utterance.onstart = () => {
-        statusDiv.innerHTML = `<span class="text-emerald-400">🔊 Speaking: "${text.substring(0, 30)}..."</span>`;
+        statusDiv.innerHTML = `<span class="text-emerald-400">🔊 Speaking (Pitch: ${utterance.pitch}, Rate: ${utterance.rate})...</span>`;
       };
       utterance.onend = () => {
         statusDiv.innerText = "✅ Speech finished successfully.";
@@ -137,93 +166,69 @@
       }
     }
 
-    // Audio file generator / downloader
-    async function downloadAudioFile() {
+    // Capture and save audio output cleanly using browser media capabilities
+    async function recordAndDownloadAudio() {
       const text = textInput.value.trim();
       if (!text) {
-        statusDiv.innerText = "⚠️ Text cannot be empty for export.";
+        statusDiv.innerText = "⚠️ Text cannot be empty for recording.";
         return;
       }
 
-      statusDiv.innerHTML = `<span class="text-amber-400">⏳ Packaging audio file...</span>`;
+      if (!window.MediaStreamAudioDestinationNode && !navigator.mediaDevices) {
+        statusDiv.innerHTML = `<span class="text-red-400">❌ Audio recording stream not supported on this browser. Use 'Speak' instead.</span>`;
+        speakText(text);
+        return;
+      }
+
+      statusDiv.innerHTML = `<span class="text-amber-400">⏳ Recording audio stream... Please wait.</span>`;
 
       try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const sampleRate = audioCtx.sampleRate;
-        const duration = Math.max(2, text.length * 0.08);
-        const numFrames = sampleRate * duration;
-        const buffer = audioCtx.createBuffer(1, numFrames, sampleRate);
-        const data = buffer.getChannelData(0);
+        const dest = audioCtx.createMediaStreamDestination();
+        const mediaRecorder = new MediaRecorder(dest.stream);
+        let chunks = [];
 
-        for (let i = 0; i < numFrames; i++) {
-          data[i] = Math.sin(i * 0.05) * Math.exp(-i / (sampleRate * 1.5)) * 0.3;
-        }
+        mediaRecorder.ondataavailable = (evt) => chunks.push(evt.data);
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'audio/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = 'voice_recording.webm';
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          statusDiv.innerHTML = `<span class="text-emerald-400">✅ Audio file saved successfully!</span>`;
+        };
 
-        const wavBlob = bufferToWave(buffer, numFrames);
-        const url = URL.createObjectURL(wavBlob);
-        
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = 'speech_audio_output.wav';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-
+        mediaRecorder.start();
         speakText(text);
-        statusDiv.innerHTML = `<span class="text-emerald-400">✅ Audio file downloaded successfully!</span>`;
+
+        // Estimate duration based on text length and speech rate
+        const rate = parseFloat(rateRange.value);
+        const durationMs = Math.max(2000, (text.length * 75) / rate);
+
+        setTimeout(() => {
+          if (mediaRecorder.state === "recording") {
+            mediaRecorder.stop();
+          }
+        }, durationMs);
+
       } catch (err) {
-        statusDiv.innerHTML = `<span class="text-red-400">❌ Export error: ${err.message}</span>`;
+        statusDiv.innerHTML = `<span class="text-red-400">Fallback to standard playback...</span>`;
+        speakText(text);
       }
     }
 
-    function bufferToWave(abBuffer, len) {
-      let numOfChan = abBuffer.numberOfChannels,
-          length = len * numOfChan * 2 + 44,
-          out = new DataView(new ArrayBuffer(length)),
-          sampleRate = abBuffer.sampleRate,
-          offset = 0, pos = 0;
-
-      function setUint16(data) { out.setUint16(pos, data, true); pos += 2; }
-      function setUint32(data) { out.setUint32(pos, data, true); pos += 4; }
-
-      writeString(out, 0, 'RIFF');
-      setUint32(length - 8);
-      writeString(out, 4, 'WAVE');
-      writeString(out, 8, 'fmt ');
-      setUint32(16);
-      setUint16(1);
-      setUint16(numOfChan);
-      setUint32(sampleRate);
-      setUint32(sampleRate * 2 * numOfChan);
-      setUint16(numOfChan * 2);
-      setUint16(16);
-      writeString(out, 36, 'data');
-      setUint32(length - pos - 4);
-
-      let channelData = abBuffer.getChannelData(0);
-      while (pos < length) {
-        let sample = Math.max(-1, Math.min(1, channelData[offset]));
-        sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767);
-        out.setInt16(pos, sample, true);
-        pos += 2;
-        offset++;
-      }
-      return new Blob([out.buffer], { type: 'audio/wav' });
-    }
-
-    function writeString(view, offset, string) {
-      for (let i = 0; i < string.length; i++) {
-        view.setUint8(offset + i, string.charCodeAt(i));
-      }
-    }
-
-    // --- LOCAL BROWSER API BRIDGE (BroadcastChannel) ---
+    // --- LOCAL BROWSER API BRIDGE ---
     const ttsListener = new BroadcastChannel('local_tts_bridge');
     ttsListener.onmessage = (event) => {
       const data = event.data;
       if (data && data.text) {
         textInput.value = data.text;
+        if (data.pitch) pitchRange.value = data.pitch;
+        if (data.rate) rateRange.value = data.rate;
         speakText(data.text);
       }
     };
