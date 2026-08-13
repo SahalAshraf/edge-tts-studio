@@ -72,7 +72,6 @@
       resultBox.classList.add('hidden');
 
       try {
-        // Points directly to Vercel's automatic serverless python function route
         const response = await fetch(`/api/synthesize?text=${encodeURIComponent(text)}&lang=${lang}`);
         if (!response.ok) throw new Error("Failed to generate audio from server.");
 
