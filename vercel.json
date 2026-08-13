@@ -1,6 +1,0 @@
-{
-  "routes": [
-    { "src": "/api/synthesize", "destination": "/api/synthesize.py" },
-    { "src": "/(.*)", "destination": "/index.html" }
-  ]
-}
