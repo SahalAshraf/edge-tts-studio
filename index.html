@@ -1,151 +1,227 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Local Browser TTS Hub</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style> body { font-family: 'Inter', sans-serif; } </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production WebCodecs Profile Capability Matrix</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+            max-width: 700px;
+            margin: 30px auto;
+            padding: 0 15px;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #dee2e6;
+        }
+        h2 { margin-top: 0; color: #111111; font-size: 22px; }
+        p { color: #495057; font-size: 15px; line-height: 1.5; }
+        button {
+            background-color: #0d6efd;
+            color: #ffffff;
+            border: none;
+            padding: 14px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.15s ease-in-out;
+        }
+        button:hover { background-color: #0b5ed7; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .alert {
+            margin-top: 20px;
+            padding: 14px;
+            border-radius: 4px;
+            font-size: 15px;
+            line-height: 1.5;
+            border: 1px solid transparent;
+        }
+        .alert-success { background-color: #d1e7dd; color: #0f5132; border-color: #badbcc; }
+        .alert-warning { background-color: #fff3cd; color: #664d03; border-color: #ffecb5; }
+        .alert-danger { background-color: #f8d7da; color: #842029; border-color: #f5c2c7; }
+        .alert-info { background-color: #cff4fc; color: #055160; border-color: #b6effb; }
+        
+        .matrix-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            display: none;
+        }
+        .matrix-table th, .matrix-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 14px;
+        }
+        .matrix-table th {
+            background-color: #f1f3f5;
+            color: #212529;
+            font-weight: 600;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .bg-success { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+        .bg-danger { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+        
+        .docs-box {
+            margin-top: 25px;
+            font-size: 13.5px;
+            color: #495057;
+            background: #f1f3f5;
+            padding: 16px;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+        .docs-box ol { padding-left: 20px; margin: 6px 0 0 0; }
+        .docs-box li { margin-bottom: 6px; }
+        code { background: #e9ecef; padding: 2px 4px; border-radius: 3px; font-family: monospace; font-size: 13px; color: #b1154a; }
+    </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4">
+<body>
 
-  <div class="max-w-xl w-full bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl p-6 sm:p-8">
+<div class="card">
+    <h2>WebCodecs Hardware Capability Matrix</h2>
+    <p>Query the hardware profile constraints of this device directly against the browser engine to see if you can scale video rendering configurations from 480p up to 1080p Full HD.</p>
     
-    <!-- Header -->
-    <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
-      <div>
-        <h1 class="text-xl font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-volume-high text-blue-400"></i> Local Browser TTS Hub
-        </h1>
-        <p class="text-xs text-slate-400 mt-0.5">Runs completely offline inside your mobile browser</p>
-      </div>
-      <span class="text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full font-bold">
-        ● API Ready
-      </span>
+    <button id="runDiagnosticBtn">Query Device Hardware Capabilities</button>
+
+    <div id="statusOutput" class="alert" style="display: none;"></div>
+
+    <table class="matrix-table" id="matrixTable">
+        <thead>
+            <tr>
+                <th>Resolution Profile</th>
+                <th>Target Parameters</th>
+                <th>Hardware Status</th>
+            </tr>
+        </thead>
+        <tbody id="matrixBody"></tbody>
+    </table>
+
+    <div class="docs-box">
+        <strong>🔒 Local Execution Security Policies (File System Context)</strong>
+        <p>Browsers restrict <code>VideoEncoder</code> when running directly via <code>file:///</code> paths. If the test shows a security block or context warning on your mobile Chrome browser, override it by doing the following:</p>
+        <ol>
+            <li>Navigate to <code>chrome://flags</code> in Mobile Chrome.</li>
+            <li>Locate the flag <strong>"Insecure origins treated as secure"</strong>.</li>
+            <li>Input your local execution path or web app IP address in the configuration field.</li>
+            <li>Toggle the drop-down option to <strong>Enabled</strong> and hit the **Relaunch** option.</li>
+        </ol>
     </div>
+</div>
 
-    <!-- Controls Form -->
-    <div class="space-y-4">
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Select Voice / Language Accent</label>
-        <select id="voiceSelect" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="">Loading browser voices...</option>
-        </select>
-      </div>
+<script>
+document.getElementById('runDiagnosticBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('runDiagnosticBtn');
+    const output = document.getElementById('statusOutput');
+    const table = document.getElementById('matrixTable');
+    const tbody = document.getElementById('matrixBody');
+    
+    // UI Reset
+    btn.disabled = true;
+    output.style.display = 'block';
+    output.className = 'alert alert-info';
+    output.innerText = 'Querying hardware codecs...';
+    table.style.display = 'none';
+    tbody.innerHTML = '';
 
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Text to Read Aloud</label>
-        <textarea id="textInput" rows="4" class="w-full p-3.5 bg-slate-950 border border-slate-700 rounded-2xl text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none">Hello! This utility reads text aloud instantly using your browser's internal engine, and accepts live text strings from your other local browser web tools.</textarea>
-      </div>
-
-      <div class="grid grid-cols-2 gap-3">
-        <button onclick="speakText()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-blue-950/40">
-          <i class="fa-solid fa-play"></i> Speak Aloud
-        </button>
-        <button onclick="stopSpeech()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-semibold py-3 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 cursor-pointer">
-          <i class="fa-solid fa-stop"></i> Stop Speech
-        </button>
-      </div>
-    </div>
-
-    <!-- Status Box -->
-    <div id="statusDiv" class="mt-4 p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-400 text-center font-mono">
-      Ready for speech rendering or cross-tab API calls.
-    </div>
-
-    <!-- Integration Guide Box -->
-    <div class="mt-6 pt-5 border-t border-slate-800">
-      <h2 class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-2">
-        <i class="fa-solid fa-code mr-1"></i> Copy/Paste API Bridge Snippet for your other local tools:
-      </h2>
-      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 font-mono text-[11px] text-emerald-400 overflow-x-auto">
-        const ttsBridge = new BroadcastChannel('local_tts_bridge');<br>
-        ttsBridge.postMessage({ text: "Text coming from your other tool!" });
-      </div>
-    </div>
-
-  </div>
-
-  <script>
-    let voices = [];
-    const voiceSelect = document.getElementById('voiceSelect');
-    const textInput = document.getElementById('textInput');
-    const statusDiv = document.getElementById('statusDiv');
-
-    function loadVoices() {
-      voices = window.speechSynthesis.getVoices();
-      voiceSelect.innerHTML = '';
-      
-      if (voices.length === 0) {
-        voiceSelect.innerHTML = '<option value="">Default System Voice</option>';
+    // Phase 1: Absolute Structural Presence Check
+    const apiExists = ('VideoEncoder' in window) && ('VideoDecoder' in window);
+    
+    if (!apiExists) {
+        output.className = 'alert alert-danger';
+        output.innerHTML = `<strong>❌ Critical Failure:</strong> The WebCodecs API interface handles are completely missing in this browser core. Client-side video generation is not possible on this browser version.`;
+        btn.disabled = false;
         return;
-      }
-
-      voices.forEach((voice, index) => {
-        const option = document.createElement('option');
-        option.value = index;
-        option.textContent = `${voice.name} (${voice.lang})${voice.default ? ' — Default' : ''}`;
-        voiceSelect.appendChild(option);
-      });
     }
 
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-    loadVoices();
-
-    function speakText(customText) {
-      if (!('speechSynthesis' in window)) {
-        statusDiv.innerText = "❌ Speech synthesis not supported by this browser.";
+    // Phase 2: Secure Context / Sandbox Enforcement Boundary Check
+    if (!window.isSecureContext) {
+        output.className = 'alert alert-warning';
+        output.innerHTML = `<strong>⚠️ API Found but Context Restricted:</strong> The <code>VideoEncoder</code> interface exists, but it is locked because this page is served via an unencrypted context (like a local <code>file:///</code> path). Please follow the <strong>Chrome Flag Override</strong> instructions below to run hardware verification tests.`;
+        btn.disabled = false;
         return;
-      }
-
-      window.speechSynthesis.cancel();
-      const text = customText || textInput.value.trim();
-      
-      if (!text) {
-        statusDiv.innerText = "⚠️ Text input cannot be empty.";
-        return;
-      }
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      const selectedIndex = voiceSelect.value;
-      if (selectedIndex !== "" && voices[selectedIndex]) {
-        utterance.voice = voices[selectedIndex];
-      }
-
-      utterance.onstart = () => {
-        statusDiv.innerHTML = `<span class="text-emerald-400">🔊 Speaking: "${text.substring(0, 35)}..."</span>`;
-      };
-
-      utterance.onend = () => {
-        statusDiv.innerText = "✅ Speech playback completed.";
-      };
-
-      utterance.onerror = (e) => {
-        statusDiv.innerHTML = `<span class="text-red-400">❌ Playback error: ${e.error}</span>`;
-      };
-
-      window.speechSynthesis.speak(utterance);
     }
 
-    function stopSpeech() {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        statusDiv.innerText = "⏹️ Speech stopped.";
-      }
+    // Phase 3: Hardware Profile Query Execution
+    // AVC/H.264 Baseline Profile (avc1.42E01E) is used for maximum embedded chipset matching compatibility
+    const hardwareProfiles = [
+        { name: '480p SD Baseline', width: 854, height: 480, fps: 30, bitrate: 1200000 },
+        { name: '720p HD Rendering', width: 1280, height: 720, fps: 30, bitrate: 2500000 },
+        { name: '1080p FHD Standard', width: 1920, height: 1080, fps: 30, bitrate: 5000000 },
+        { name: '1080p FHD High-Frame', width: 1920, height: 1080, fps: 60, bitrate: 8000000 }
+    ];
+
+    let supportedCount = 0;
+
+    for (const profile of hardwareProfiles) {
+        const tr = document.createElement('tr');
+        
+        const tdName = document.createElement('td');
+        tdName.innerHTML = `<strong>${profile.name}</strong>`;
+        
+        const tdParams = document.createElement('td');
+        tdParams.innerText = `${profile.width} × ${profile.height} @ ${profile.fps}fps (${(profile.bitrate / 1000000).toFixed(1)} Mbps)`;
+        
+        const tdStatus = document.createElement('td');
+        
+        try {
+            // Native Hardware Configuration Check via Browser Engine Pipeline
+            const result = await VideoEncoder.isConfigSupported({
+                codec: 'avc1.42E01E', 
+                width: profile.width,
+                height: profile.height,
+                bitrate: profile.bitrate,
+                framerate: profile.fps,
+                avc: { format: 'annexb' }
+            });
+
+            if (result.supported) {
+                tdStatus.innerHTML = `<span class="badge bg-success">Supported</span>`;
+                supportedCount++;
+            } else {
+                tdStatus.innerHTML = `<span class="badge bg-danger">Rejected</span>`;
+            }
+        } catch (error) {
+            tdStatus.innerHTML = `<span class="badge bg-danger">HW Error</span>`;
+        }
+
+        tr.appendChild(tdName);
+        tr.appendChild(tdParams);
+        tr.appendChild(tdStatus);
+        tbody.appendChild(tr);
     }
 
-    // --- BROADCAST API LISTENER (Accepts messages from your other local apps) ---
-    const ttsListener = new BroadcastChannel('local_tts_bridge');
-    ttsListener.onmessage = (event) => {
-      const data = event.data;
-      if (data && data.text) {
-        textInput.value = data.text;
-        speakText(data.text);
-      }
-    };
-  </script>
+    // Display Results Matrix
+    table.style.display = 'table';
+    btn.disabled = false;
+
+    if (supportedCount === hardwareProfiles.length) {
+        output.className = 'alert alert-success';
+        output.innerHTML = `<strong>✅ Verification Successful:</strong> The API responds fully and all profiles up to 1080p are hardware-supported. You can safely build your GSAP canvas pipeline up to full resolution.`;
+    } else if (supportedCount > 0) {
+        output.className = 'alert alert-warning';
+        output.innerHTML = `<strong>⚠️ Scalability Warning:</strong> WebCodecs responds, but your device hardware rejected the higher-tier rendering resolutions. Look at the matrix table below to find the maximum resolution your device can support for your canvas rendering setup.`;
+    } else {
+        output.className = 'alert alert-danger';
+        output.innerHTML = `<strong>❌ Codec Rejection:</strong> WebCodecs is present, but the underlying device hardware has rejected all tested H.264 Baseline configurations.`;
+    }
+});
+</script>
 
 </body>
 </html>
